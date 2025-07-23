@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
@@ -25,7 +25,7 @@ const StrawberryList: React.FC = () => {
       setUserRole(decodedToken.role);
     }
 
-    axios.get('http://localhost:3001/strawberries')
+    api.get('/strawberries')
       .then(response => {
         setStrawberries(response.data);
       })
@@ -37,7 +37,7 @@ const StrawberryList: React.FC = () => {
   const handleDelete = async (id: number) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://localhost:3001/strawberries/${id}`, {
+      await api.delete(`/strawberries/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStrawberries(strawberries.filter(s => s.id !== id));

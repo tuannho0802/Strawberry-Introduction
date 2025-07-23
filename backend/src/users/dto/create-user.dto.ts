@@ -15,6 +15,12 @@ export class CreateUserDto {
   password: string;
 
   @ApiProperty({
+    example: 'supersecretpassword',
+    description: 'The password confirmation.',
+  })
+  confirmPassword: string;
+
+  @ApiProperty({
     example: Role.USER,
     enum: Role,
     description: 'The role of the user.',

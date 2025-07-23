@@ -1,4 +1,5 @@
 import { CreateStrawberryDto } from './dto/create-strawberry.dto';
+import { UpdateStrawberryDto } from './dto/update-strawberry.dto';
 import {
   Controller,
   Get,
@@ -8,7 +9,10 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { StrawberriesService } from './strawberries.service';
 import { Strawberry } from './entities/strawberry.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -31,8 +35,12 @@ export class StrawberriesController {
     description: 'The strawberry has been successfully created.',
     type: Strawberry,
   })
-  create(@Body() createStrawberryDto: CreateStrawberryDto) {
-    return this.strawberriesService.create(createStrawberryDto);
+  @UseInterceptors(FileInterceptor('file'))
+  create(
+    @Body() createStrawberryDto: CreateStrawberryDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.strawberriesService.create(createStrawberryDto, file);
   }
 
   @Get()
@@ -66,8 +74,13 @@ export class StrawberriesController {
     description: 'The strawberry has been successfully updated.',
     type: Strawberry,
   })
-  update(@Param('id') id: string, @Body() strawberry: Partial<Strawberry>) {
-    return this.strawberriesService.update(id, strawberry);
+  @UseInterceptors(FileInterceptor('file'))
+  update(
+    @Param('id') id: string,
+    @Body() updateStrawberryDto: UpdateStrawberryDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.strawberriesService.update(id, updateStrawberryDto, file);
   }
 
   @Delete(':id')

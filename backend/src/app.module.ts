@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { ConfigModule } from '@nestjs/config';
+import { ImgbbModule } from './imgbb/imgbb.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ConfigModule } from '@nestjs/config';
     StrawberriesModule,
     UsersModule,
     AuthModule,
+    ImgbbModule,
   ],
   controllers: [AppController],
   providers: [AppService],

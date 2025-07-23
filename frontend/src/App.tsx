@@ -8,6 +8,7 @@ import StrawberryDetail from './components/StrawberryDetail';
 import Contact from './components/Contact';
 import Login from './components/Login';
 import Register from './components/Register';
+import EditStrawberry from './components/EditStrawberry';
 
 const App: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/strawberries" element={<StrawberryList />} />
             <Route path="/strawberries/:id" element={<StrawberryDetail />} />
+            <Route path="/strawberries/edit/:id" element={<EditStrawberry />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

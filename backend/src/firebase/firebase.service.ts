@@ -1,40 +1,47 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
   private _firestore: admin.firestore.Firestore;
-
-  constructor(private configService: ConfigService) {}
+  private _storage: admin.storage.Storage;
 
   onModuleInit() {
-    const serviceAccountBase64 = this.configService.get<string>(
-      'FIREBASE_SERVICE_ACCOUNT_BASE64',
-    );
-    const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
-
-    if (!serviceAccountBase64 || !projectId) {
-      throw new Error(
-        'Firebase credentials are not defined in the environment variables.',
+    if (admin.apps.length === 0) {
+      const serviceAccountPath = path.join(
+        process.cwd(),
+        'firebase-service-account.json',
       );
+
+      if (!fs.existsSync(serviceAccountPath)) {
+        throw new Error(
+          'Firebase service account file not found at ' + serviceAccountPath,
+        );
+      }
+
+      const serviceAccount = JSON.parse(
+        fs.readFileSync(serviceAccountPath, 'utf8'),
+      );
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: serviceAccount.project_id,
+        storageBucket: `${serviceAccount.project_id}.appspot.com`,
+      });
     }
 
-    const serviceAccountJson = Buffer.from(
-      serviceAccountBase64,
-      'base64',
-    ).toString('utf-8');
-    const serviceAccount = JSON.parse(serviceAccountJson);
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId: projectId,
-    });
-
     this._firestore = admin.firestore();
+    this._storage = admin.storage();
   }
 
   get firestore(): admin.firestore.Firestore {
     return this._firestore;
   }
+
+  get storage(): admin.storage.Storage {
+    return this._storage;
+  }
 }
+

@@ -36,6 +36,7 @@ async function bootstrap() {
     await usersService.create({
       username: 'admin',
       password: 'adminpassword',
+      confirmPassword: 'adminpassword',
       role: Role.ADMIN,
     });
   }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -10,7 +10,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3001/auth/login', { username, password });
+      const response = await api.post('/auth/login', { username, password });
       localStorage.setItem('token', response.data.access_token);
       navigate('/');
     } catch (error) {

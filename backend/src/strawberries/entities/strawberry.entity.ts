@@ -3,4 +3,5 @@ export class Strawberry {
   name: string;
   description: string;
   imageUrl: string;
+  deleteUrl?: string;
 }

@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { FirebaseService } from 'src/firebase/firebase.service';
 import { Strawberry } from './entities/strawberry.entity';
 import { CollectionReference } from 'firebase-admin/firestore';
 import { strawberryConverter } from './strawberry.converter';
 import { CreateStrawberryDto } from './dto/create-strawberry.dto';
+import { UpdateStrawberryDto } from './dto/update-strawberry.dto';
+import { ImgbbService } from 'src/imgbb/imgbb.service';
+import { FirebaseService } from 'src/firebase/firebase.service';
 
 @Injectable()
 export class StrawberriesService {
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private firebaseService: FirebaseService,
+    private imgbbService: ImgbbService,
+  ) {}
 
   private getCollection(): CollectionReference<Strawberry> {
     return this.firebaseService.firestore
@@ -15,11 +20,24 @@ export class StrawberriesService {
       .withConverter(strawberryConverter);
   }
 
-  async create(createStrawberryDto: CreateStrawberryDto): Promise<Strawberry> {
-    // The 'id' can be a dummy value because the converter will remove it.
+  async create(
+    createStrawberryDto: CreateStrawberryDto,
+    file?: Express.Multer.File,
+  ): Promise<Strawberry> {
+    let imageUrl = createStrawberryDto.imageUrl;
+    let deleteUrl: string | undefined;
+
+    if (file) {
+      const uploadResult = await this.imgbbService.upload(file);
+      imageUrl = uploadResult.imageUrl;
+      deleteUrl = uploadResult.deleteUrl;
+    }
+
     const newStrawberry: Strawberry = {
       id: '',
       ...createStrawberryDto,
+      imageUrl,
+      deleteUrl,
     };
     const docRef = await this.getCollection().add(newStrawberry);
     const snapshot = await docRef.get();
@@ -41,13 +59,34 @@ export class StrawberriesService {
 
   async update(
     id: string,
-    strawberry: Partial<Strawberry>,
+    updateStrawberryDto: UpdateStrawberryDto,
+    file?: Express.Multer.File,
   ): Promise<Strawberry> {
-    await this.getCollection().doc(id).update(strawberry);
+    const updatePayload: Partial<Strawberry> = { ...updateStrawberryDto };
+    const strawberry = await this.findOne(id);
+
+    if (file) {
+      if (strawberry && strawberry.deleteUrl) {
+        await this.imgbbService.delete(strawberry.deleteUrl);
+      }
+      const uploadResult = await this.imgbbService.upload(file);
+      updatePayload.imageUrl = uploadResult.imageUrl;
+      updatePayload.deleteUrl = uploadResult.deleteUrl;
+    }
+
+    if (Object.keys(updatePayload).length > 0) {
+      await this.getCollection().doc(id).update(updatePayload);
+    }
+
     return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
+    const strawberry = await this.findOne(id);
+    if (strawberry && strawberry.deleteUrl) {
+      await this.imgbbService.delete(strawberry.deleteUrl);
+    }
     await this.getCollection().doc(id).delete();
   }
 }
+

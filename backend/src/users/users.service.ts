@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { FirebaseService } from 'src/firebase/firebase.service';
-import { User } from './entities/user.entity';
+import { User, Role } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { CollectionReference } from 'firebase-admin/firestore';
 import { userConverter } from './user.converter';
@@ -17,6 +21,15 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    const existingUser = await this.findOne(createUserDto.username);
+    if (existingUser) {
+      throw new ConflictException('Username already exists');
+    }
+
+    if (createUserDto.password !== createUserDto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
 
@@ -24,7 +37,7 @@ export class UsersService {
       id: '', // Dummy id, will be removed by converter
       username: createUserDto.username,
       password: hashedPassword,
-      role: createUserDto.role,
+      role: createUserDto.role || Role.USER, // Default to 'user'
     };
 
     const docRef = await this.getCollection().add(newUser);
@@ -33,10 +46,14 @@ export class UsersService {
   }
 
   async findOne(username: string): Promise<User | undefined> {
-    const snapshot = await this.getCollection().where('username', '==', username).limit(1).get();
+    const snapshot = await this.getCollection()
+      .where('username', '==', username)
+      .limit(1)
+      .get();
     if (snapshot.empty) {
       return undefined;
     }
     return snapshot.docs[0].data();
   }
 }
+
