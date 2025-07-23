@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { Strawberry } from './entities/strawberry.entity';
 import { CollectionReference } from 'firebase-admin/firestore';
@@ -63,11 +64,15 @@ export class StrawberriesService {
     file?: Express.Multer.File,
   ): Promise<Strawberry> {
     const updatePayload: Partial<Strawberry> = { ...updateStrawberryDto };
-    const strawberry = await this.findOne(id);
 
     if (file) {
+      const strawberry = await this.findOne(id);
       if (strawberry && strawberry.deleteUrl) {
-        await this.imgbbService.delete(strawberry.deleteUrl);
+        try {
+          await this.imgbbService.delete(strawberry.deleteUrl);
+        } catch (error) {
+          console.error('Failed to delete old image', error);
+        }
       }
       const uploadResult = await this.imgbbService.upload(file);
       updatePayload.imageUrl = uploadResult.imageUrl;

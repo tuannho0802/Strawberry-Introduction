@@ -29,6 +29,16 @@ export class ImgbbService {
   }
 
   async delete(deleteUrl: string): Promise<void> {
-    await axios.get(deleteUrl);
+    try {
+      await axios.get(deleteUrl, {
+        params: {
+          key: this.apiKey,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to delete image from ImgBB:', error);
+      // We can choose to re-throw or just log the error
+      // For now, we'll log it and not interrupt the application flow
+    }
   }
 }
